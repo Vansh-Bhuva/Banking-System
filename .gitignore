@@ -1,2 +1,5 @@
+# Environment variables
 .env
+
+# Spring Boot config containing secrets
 application.properties
