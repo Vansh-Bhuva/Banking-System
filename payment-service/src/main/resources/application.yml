@@ -25,6 +25,9 @@ spring:
 server:
   port: 8083
 
+jwt:
+  secret: ${JWT_SECRET}
+
 # Razorpay Configuration
 razorpay:
   key-id: ${RAZORPAY_KEY_ID}

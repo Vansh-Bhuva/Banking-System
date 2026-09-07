@@ -1,6 +1,6 @@
 spring:
   config:
-    import: optional:file:../.env[.properties]
+    import: optional:file:../application.properties
 
   application:
     name: transaction-service
@@ -48,6 +48,9 @@ server:
 account:
   service:
     url: http://localhost:8081
+
+jwt:
+  secret: ${JWT_SECRET}
 
 management:
   endpoints:

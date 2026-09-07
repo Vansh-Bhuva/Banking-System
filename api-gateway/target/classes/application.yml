@@ -12,7 +12,26 @@ spring:
 
   cloud:
     gateway:
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:5173"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders:
+              - "*"
+            allowCredentials: true
       routes:
+        # Auth Service Routes
+        - id: auth-service
+          uri: http://localhost:8086
+          predicates:
+            - Path=/api/auth/**
 
         # Account Service Routes
         - id: account-service

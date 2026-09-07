@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Tag(
         name = "Account Management",
@@ -36,6 +37,15 @@ public class AccountController {
             @Valid @RequestBody CreateAccountRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(accountService.createAccount(request));
+    }
+
+    @Operation(
+            summary = "Get accounts",
+            description = "Get all account of user"
+    )
+    @GetMapping
+    public ResponseEntity<List<AccountResponse>> getAccounts() {
+        return ResponseEntity.ok(accountService.getAccounts());
     }
 
     @Operation(

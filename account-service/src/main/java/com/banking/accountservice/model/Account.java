@@ -25,6 +25,9 @@ public class Account {
     private String accountNumber;
 
     @Column(nullable = false)
+    private Long userId;
+
+    @Column(nullable = false)
     private String accountHolderName;
 
     @Column(nullable = false)
