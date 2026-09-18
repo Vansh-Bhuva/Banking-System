@@ -6,7 +6,6 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
-
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -16,4 +15,5 @@ public class TransactionCompletedEvent {
     private String receiverAccountNumber;
     private BigDecimal amount;
     private String description;
+    private Long userId;
 }

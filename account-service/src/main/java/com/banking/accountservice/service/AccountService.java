@@ -39,6 +39,12 @@ public class AccountService {
         }
 
         Account account = new Account();
+        Long userId = (Long) SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getPrincipal();
+
+        account.setUserId(userId);
         account.setAccountHolderName(request.getAccountHolderName());
         account.setEmail(request.getEmail());
         account.setPhone(request.getPhone());

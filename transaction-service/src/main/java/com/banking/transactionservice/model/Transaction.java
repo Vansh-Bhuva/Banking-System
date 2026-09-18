@@ -21,6 +21,9 @@ public class Transaction {
     private String id;
 
     @Column(nullable = false)
+    private Long userId;
+
+    @Column(nullable = false)
     private String senderAccountNumber;
 
     @Column(nullable = false)

@@ -10,6 +10,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -67,8 +68,14 @@ public class TransactionEventConsumer {
             log.info("OTP generated for transaction: {} expires in {} min",
                     transactionId, OTP_EXPIRY_MINUTES);
 
+            Long userId = (Long) SecurityContextHolder
+                    .getContext()
+                    .getAuthentication()
+                    .getPrincipal();
+
             // Notify user
             Map<String, Object> otpEvent = new HashMap<>();
+            otpEvent.put("userId", userId);
             otpEvent.put("transactionId", transactionId);
             otpEvent.put("accountNumber", accountNumber);
             otpEvent.put("reason", reason);

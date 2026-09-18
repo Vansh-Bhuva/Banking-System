@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @Tag(
         name = "Transaction Management",
@@ -60,6 +61,15 @@ public class TransactionController {
             @PathVariable String accountNumber) {
         return ResponseEntity.ok(
                 transactionService.getTransactionHistory(accountNumber));
+    }
+
+    @GetMapping("/{transactionId}/otp")
+    public ResponseEntity<Map<String, Object>> getOTP(
+            @PathVariable String transactionId) {
+
+        return ResponseEntity.ok(
+                transactionService.getOTP(transactionId)
+        );
     }
 
     @Operation(

@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -42,6 +43,14 @@ public class TransactionService {
 
     public TransactionResponse transfer(TransferRequest request){
 
+        String principal = SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getPrincipal()
+                .toString();
+
+        Long userId = Long.parseLong(principal);
+
         log.info("SAGA START - Transfer: {} -> {} amount: {}",
                 request.getSenderAccountNumber(),
                 request.getReceiverAccountNumber(),
@@ -53,6 +62,8 @@ public class TransactionService {
                 request.getAmount());
 
         Transaction transaction = new Transaction();
+
+        transaction.setUserId(userId);
         transaction.setSenderAccountNumber(request.getSenderAccountNumber());
         transaction.setReceiverAccountNumber(request.getReceiverAccountNumber());
         transaction.setAmount(request.getAmount());
@@ -187,7 +198,8 @@ public class TransactionService {
                 transaction.getSenderAccountNumber(),
                 transaction.getReceiverAccountNumber(),
                 transaction.getAmount(),
-                transaction.getDescription()
+                transaction.getDescription(),
+                transaction.getUserId()
         );
 
         kafkaTemplate.send(TRANSACTION_COMPLETED_TOPIC, transaction.getId(), completedEvent);
@@ -209,6 +221,22 @@ public class TransactionService {
         }
 
         completeTransaction(transaction);
+    }
+
+    public Map<String, Object> getOTP(String transactionID) {
+
+        String otpKey = "verification:otp" + transactionID;
+        String storedOtp = redisTemplate.opsForValue().get(otpKey);
+
+        if (storedOtp == null) {
+            throw new RuntimeException("OTP expired or not generated");
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("otp", storedOtp);
+        response.put("otpRequired", true);
+
+        return response;
     }
 
 

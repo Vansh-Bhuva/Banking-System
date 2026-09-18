@@ -43,6 +43,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String username = jwtService.extractUsername(token);
         String role = jwtService.extractRole(token);
+        Long userId = jwtService.extractUserId(token);
 
         var authorities = role != null
                 ? List.of(new SimpleGrantedAuthority("ROLE_" + role))
@@ -50,7 +51,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         var authentication =
                 new UsernamePasswordAuthenticationToken(
-                        username,
+                        userId,
                         null,
                         authorities
                 );

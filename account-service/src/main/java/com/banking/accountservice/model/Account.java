@@ -24,7 +24,6 @@ public class Account {
     @Column(unique = true, nullable = false)
     private String accountNumber;
 
-    @Column(nullable = false)
     private Long userId;
 
     @Column(nullable = false)
