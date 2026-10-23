@@ -2,12 +2,14 @@ package com.banking.accountservice.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -15,6 +17,7 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class Account {
 
     @Id
@@ -54,4 +57,16 @@ public class Account {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    @Column(nullable = false, precision = 15, scale = 2)
+    @Builder.Default
+    private BigDecimal dailyTransferred = BigDecimal.ZERO;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private LocalDate lastResetDate = LocalDate.now();
+
+    @Version
+    @Column(nullable = false)
+    private Long version = 0L;
 }

@@ -19,7 +19,6 @@
         <module>fraud-detection-service</module>
         <module>notification-service</module>
         <module>transaction-service</module>
-        <module>payment-service</module>
     </modules>
 
 </project>

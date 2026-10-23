@@ -12,28 +12,14 @@ spring:
 
   cloud:
     gateway:
-      globalcors:
-        cors-configurations:
-          '[/**]':
-            allowedOrigins:
-              - "http://localhost:5173"
-            allowedMethods:
-              - GET
-              - POST
-              - PUT
-              - DELETE
-              - OPTIONS
-            allowedHeaders:
-              - "*"
-            allowCredentials: true
       routes:
-        # Auth Service Routes
+        # Auth Service
         - id: auth-service
           uri: http://localhost:8086
           predicates:
             - Path=/api/auth/**
 
-        # Account Service Routes
+        # Account Service
         - id: account-service
           uri: http://localhost:8081
           predicates:
@@ -44,36 +30,77 @@ spring:
                 redis-rate-limiter.replenishRate: 10
                 redis-rate-limiter.burstCapacity: 20
 
-        # Transaction Service Routes
+        # Transaction Service
         - id: transaction-service
           uri: http://localhost:8082
           predicates:
-            - Path=/api/v1/transactions/**
+            - Path=/api/v1/transactions/**,/api/v1/beneficiaries/**
           filters:
             - name: RequestRateLimiter
               args:
                 redis-rate-limiter.replenishRate: 10
                 redis-rate-limiter.burstCapacity: 20
 
-        # Payment Service Routes
-        - id: payment-service
-          uri: http://localhost:8083
-          predicates:
-            - Path=/api/v1/payments/**
-          filters:
-            - name: RequestRateLimiter
-              args:
-                redis-rate-limiter.replenishRate: 5
-                redis-rate-limiter.burstCapacity: 10
-
-        # Notification Service Routes
+        # Notification Service
         - id: notification-service
           uri: http://localhost:8085
           predicates:
             - Path=/api/v1/notifications/**
 
+        # ─── ADMIN ───────────────────────────────────────────────
+        - id: admin-auth
+          uri: http://localhost:8086
+          predicates:
+            - Path=/api/v1/admin/users/**,/api/v1/admin/kyc/**
+
+        - id: admin-account
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/v1/admin/accounts/**,/api/v1/admin/deposits/**
+
+        - id: admin-transaction
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/v1/admin/transactions/**,/api/v1/admin/beneficiaries/**
+
+        - id: admin-fraud
+          uri: http://localhost:8084
+          predicates:
+            - Path=/api/v1/admin/fraud/**
+
+        - id: admin-notification
+          uri: http://localhost:8085
+          predicates:
+            - Path=/api/v1/admin/notifications/**
+
+        # ─── STATS ROUTES ───────────────────────────────────────────────
+
+        - id: admin-stats-users
+          uri: http://localhost:8086
+          predicates:
+            - Path=/api/v1/admin/stats/users
+
+        - id: admin-stats-accounts
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/v1/admin/stats/accounts
+
+        - id: admin-stats-transactions
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/v1/admin/stats/transactions
+
+        - id: admin-stats-fraud
+          uri: http://localhost:8084
+          predicates:
+            - Path=/api/v1/admin/stats/fraud
+
 server:
   port: 8080
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION}
 
 management:
   endpoints:

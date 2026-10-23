@@ -49,6 +49,12 @@ account:
   service:
     url: http://localhost:8081
 
+banking:
+  beneficiary:
+    cooling-minutes: 30
+    enforce-for-transfer: true      # set false to disable enforcement
+    enforce-threshold: 10000        # only enforce above this amount (INR)
+
 jwt:
   secret: ${JWT_SECRET}
 

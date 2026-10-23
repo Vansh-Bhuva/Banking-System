@@ -3,3 +3,9 @@
 
 # Spring Boot config containing secrets
 application.properties
+
+# Folders
+.idea
+
+# Files
+.DS_Store

@@ -38,6 +38,12 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
+banking:
+  deposit:
+    fd-min-amount: 1000
+    rd-min-amount: 500
+    premature-penalty-rate: 1.0     # % deducted from applicable rate
+
 server:
   port: 8081
 

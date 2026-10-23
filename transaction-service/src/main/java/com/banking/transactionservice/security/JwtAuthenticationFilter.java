@@ -52,7 +52,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         var authentication =
                 new UsernamePasswordAuthenticationToken(
                         userId,
-                        null,
+                        token,
                         authorities
                 );
 

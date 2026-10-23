@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.security.SecureRandom;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -101,6 +102,17 @@ public class AccountService {
     public void deductBalance(String accountNumber, BigDecimal amount) {
         log.info("Deducting {} from account: {}", amount, accountNumber);
         Account account = findByAccountNumber(accountNumber);
+        resetDailyCounterIfNeeded(account);
+
+        BigDecimal projected = account.getDailyTransferred().add(amount);
+        if (projected.compareTo(account.getDailyTransactionLimit()) > 0) {
+            throw new RuntimeException(
+                    "Daily transaction limit exceeded. Limit: "
+                            + account.getDailyTransactionLimit()
+                            + ", Already transferred today: "
+                            + account.getDailyTransferred()
+                            + ", Attempted: " + amount);
+        }
 
         if (account.getStatus() != AccountStatus.ACTIVE) {
             throw new RuntimeException("Account is not active: " + accountNumber);
@@ -111,8 +123,17 @@ public class AccountService {
         }
 
         account.setBalance(account.getBalance().subtract(amount));
+        account.setDailyTransferred(projected);
         accountRepository.save(account);
         log.info("Balance deducted. New balance: {}", account.getBalance());
+    }
+
+    private void resetDailyCounterIfNeeded(Account account) {
+        LocalDate today = LocalDate.now();
+        if (!today.equals(account.getLastResetDate())) {
+            account.setDailyTransferred(BigDecimal.ZERO);
+            account.setLastResetDate(today);
+        }
     }
 
 
@@ -153,7 +174,7 @@ public class AccountService {
         }
     }
 
-    
+
     private String generateAccountNumber() {
         String accountNumber;
 
@@ -176,6 +197,7 @@ public class AccountService {
     private AccountResponse mapToResponse(Account account) {
         AccountResponse response = new AccountResponse();
         response.setId(account.getId());
+        response.setUserId(account.getUserId());
         response.setAccountNumber(account.getAccountNumber());
         response.setAccountHolderName(account.getAccountHolderName());
         response.setEmail(account.getEmail());

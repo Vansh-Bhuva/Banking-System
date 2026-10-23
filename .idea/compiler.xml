@@ -9,7 +9,6 @@
         <outputRelativeToContentRoot value="true" />
         <module name="api-gateway" />
         <module name="transaction-service" />
-        <module name="payment-service" />
         <module name="account-service" />
         <module name="notification-service" />
         <module name="fraud-detection-service" />
@@ -24,12 +23,17 @@
         <module name="auth-service" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="common-security" target="17" />
+      <module name="payment-service" target="17" />
+    </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="account-service" options="-parameters" />
       <module name="api-gateway" options="-parameters" />
       <module name="auth-service" options="-parameters" />
+      <module name="common-security" options="" />
       <module name="fraud-detection-service" options="-parameters" />
       <module name="notification-service" options="-parameters" />
       <module name="payment-service" options="-parameters" />
