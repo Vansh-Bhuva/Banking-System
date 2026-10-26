@@ -47,6 +47,10 @@ banking:
 server:
   port: 8081
 
+auth:
+  service:
+    url: http://localhost:8086
+
 jwt:
   secret: ${JWT_SECRET}
 

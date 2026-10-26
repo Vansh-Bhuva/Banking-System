@@ -35,6 +35,12 @@ public class User {
     @Column(nullable = false)
     private Role role;
 
+    @Column(length = 512)
+    private String aadhaarEncrypted;   // note: encrypt in production
+
+    @Column(length = 512)
+    private String panEncrypted;
+
     // ── KYC ────────────────────────────────────────
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

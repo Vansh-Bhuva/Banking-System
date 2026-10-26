@@ -86,58 +86,57 @@ public class NotificationService {
 
 
     @KafkaListener(topics = "transaction.otp.generated")
-    public void consumeOtpGenerated(
-            @Payload Map<String, Object> payload) {
+    public void consumeOtpGenerated(@Payload Map<String, Object> payload) {
         try {
-            Long userId = (Long) payload.get("userId");
+            Object userIdObj = payload.get("userId");
+            Long userId = userIdObj == null ? null : Long.valueOf(userIdObj.toString());
             String accountNumber = (String) payload.get("accountNumber");
             String otp = (String) payload.get("otp");
             String transactionId = (String) payload.get("transactionId");
-            String amount = payload.get("amount").toString();
+            Object amountObj = payload.get("amount");
+            String amount = amountObj == null ? "0" : amountObj.toString();
             String reason = (String) payload.get("reason");
 
-            String email = authServiceClient.getUserEmail(userId);
+            if (userId == null || otp == null) {
+                log.error("Invalid OTP event: userId={}, otp={}, tx={}",
+                        userId, otp, transactionId);
+                return;
+            }
 
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setTo(email);
-            message.setSubject("Transaction OTP Verification");
-            message.setText(
-                    "Your OTP is: " + otp + "\n\n" +
-                            "Transaction ID: " + transactionId + "\n" +
-                            "Amount: ₹" + amount + "\n\n" +
-                            "This OTP is valid for 5 minutes."
-            );
+            log.info("=== OTP NOTIFICATION ===");
+            log.info("User: {} Account: {} Tx: {}", userId, accountNumber, transactionId);
+            log.info("OTP: {}", otp);
+            log.info("========================");
 
-            mailSender.send(message);
+            String email;
+            try {
+                email = authServiceClient.getUserEmail(userId);
+            } catch (Exception e) {
+                log.warn("Could not fetch email for userId {}: {}", userId, e.getMessage());
+                email = null;
+            }
 
-            saveNotification(
-                    userId,
-                    accountNumber,
-                    "OTP_REQUIRED",
+            if (email != null) {
+                SimpleMailMessage message = new SimpleMailMessage();
+                message.setTo(email);
+                message.setSubject("Transaction OTP Verification");
+                message.setText("Your OTP is: " + otp + "\n\n" +
+                        "Transaction ID: " + transactionId + "\n" +
+                        "Amount: ₹" + amount + "\n\n" +
+                        "This OTP is valid for 5 minutes.");
+                try {
+                    mailSender.send(message);
+                } catch (Exception e) {
+                    log.warn("Mail send failed for tx {}: {}", transactionId, e.getMessage());
+                }
+            }
+
+            saveNotification(userId, accountNumber, "OTP_REQUIRED",
                     "Transaction Verification Required",
-                    String.format(
-                            "Suspicious activity detected. Reason: %s. " +
-                                    "Transaction of ₹%s requires OTP verification.",
-                            reason,
-                            amount
-                    ),
-                    transactionId
-            );
-
-            sendAlert(accountNumber,
-                    "🔐 TRANSACTION VERIFICATION REQUIRED",
-                    String.format(
-                            "Suspicious activity detected on your account. " +
-                                    "Reason: %s. " +
-                                    "A transaction of ₹%s is pending verification. " +
-                                    "Your OTP is: %s. Valid for 5 minutes. " +
-                                    "If this wasn't you — ignore this message. " +
-                                    "Transaction will be cancelled and amount refunded automatically.",
-                            reason, amount, otp, transactionId, otp));
-
+                    String.format("Suspicious activity detected. Reason: %s. Transaction of ₹%s requires OTP verification.", reason, amount),
+                    transactionId);
         } catch (Exception e) {
-            log.error("Error sending OTP notification: {}",
-                    e.getMessage());
+            log.error("Error sending OTP notification: {}", e.getMessage(), e);
         }
     }
 

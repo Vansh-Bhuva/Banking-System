@@ -1,6 +1,5 @@
 package com.banking.transactionservice.client;
 
-import com.banking.transactionservice.config.FeignConfig;
 import com.banking.transactionservice.dto.AccountDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.math.BigDecimal;
 
-@FeignClient(name = "account-service", url = "${account.service.url}" ,configuration = FeignConfig.class)
+@FeignClient(name = "account-service", url = "${account.service.url}" ,configuration = com.banking.transactionservice.feign.AccountFeignConfig.class)
 public interface AccountServiceClient {
 
 

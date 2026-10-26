@@ -17,6 +17,8 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .authorizeExchange(ex -> ex
                         .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .pathMatchers("/api/auth/**").permitAll()
+                        .pathMatchers("/api/v1/admin/**").permitAll()
                         .anyExchange().permitAll())
                 .build();
     }

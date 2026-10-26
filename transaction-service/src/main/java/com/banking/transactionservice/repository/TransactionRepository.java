@@ -45,4 +45,13 @@ public interface TransactionRepository extends JpaRepository<Transaction, String
             "WHERE t.createdAt >= :start AND t.status = 'COMPLETED'")
     BigDecimal sumAmountSince(@Param("start") LocalDateTime start);
 
+    @Query("SELECT t FROM Transaction t " +
+            "WHERE t.senderAccountNumber = :accountNumber " +
+            "   OR t.receiverAccountNumber = :accountNumber " +
+            "ORDER BY t.createdAt DESC")
+    List<Transaction> findAllByAccount(
+            @Param("accountNumber") String accountNumber);
+
+    List<Transaction> findByStatusAndCreatedAtBefore(
+            TransactionStatus status, LocalDateTime cutoff);
 }

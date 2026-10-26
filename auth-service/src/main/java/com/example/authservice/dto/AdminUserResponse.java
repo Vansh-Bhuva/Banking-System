@@ -14,6 +14,8 @@ public class AdminUserResponse {
     private Role role;
     private KycStatus kycStatus;
     private Boolean blocked;
+    private String aadhaarMasked;   // "XXXXXXXX1234"
+    private String panMasked;       // "XXXXX1234X"
     private BigDecimal ytdCredits;
     private LocalDateTime kycVerifiedAt;
     private String kycRejectionReason;

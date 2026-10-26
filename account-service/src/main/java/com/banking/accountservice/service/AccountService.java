@@ -1,5 +1,6 @@
 package com.banking.accountservice.service;
 
+import com.banking.accountservice.client.AuthServiceClient;
 import com.banking.accountservice.dto.AccountResponse;
 import com.banking.accountservice.dto.CreateAccountRequest;
 import com.banking.accountservice.model.Account;
@@ -19,7 +20,6 @@ import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 @Service
 @RequiredArgsConstructor
@@ -28,23 +28,41 @@ public class AccountService {
 
     private final AccountRepository accountRepository;
     private static SecureRandom secureRandom = new SecureRandom();
+    private final AuthServiceClient authServiceClient;
 
 
     @Transactional
     public AccountResponse createAccount(CreateAccountRequest request) {
-        log.info("Creating account for: {}", request.getEmail());
+
+        Long userId = (Long) SecurityContextHolder
+                .getContext().getAuthentication().getPrincipal();
+
+        // account-service AccountService.createAccount
+        if (accountRepository.existsByUserIdAndEmail(userId, request.getEmail())) {
+            throw new RuntimeException("Account with this email already exists for you");
+        }
+
+        // ── KYC gate ──
+        Map<String, Object> kyc;
+        try {
+            kyc = authServiceClient.getKycStatus(userId);
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to verify KYC status. Try again.");
+        }
+        String kycStatus = (String) kyc.get("kycStatus");
+
+        if ("PENDING".equals(kycStatus) || "REJECTED".equals(kycStatus)) {
+            throw new RuntimeException(
+                    "KYC not completed. Complete KYC before opening an account.");
+        }
+
+        log.info("Creating account for: {} (KYC={})", request.getEmail(), kycStatus);
 
         if (accountRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Account already exists for email: "
-                    + request.getEmail());
+            throw new RuntimeException("Account already exists for email: " + request.getEmail());
         }
 
         Account account = new Account();
-        Long userId = (Long) SecurityContextHolder
-                .getContext()
-                .getAuthentication()
-                .getPrincipal();
-
         account.setUserId(userId);
         account.setAccountHolderName(request.getAccountHolderName());
         account.setEmail(request.getEmail());
@@ -53,11 +71,17 @@ public class AccountService {
         account.setStatus(AccountStatus.ACTIVE);
         account.setBalance(request.getInitialDeposit());
         account.setAccountNumber(generateAccountNumber());
-        account.setDailyTransactionLimit(
-                request.getAccountType() == AccountType.SAVINGS
-                        ? new BigDecimal("100000")
-                        : new BigDecimal("500000")
-        );
+
+        // ── OTP_EKYC restricted limit ──
+        BigDecimal limit;
+        if ("OTP_EKYC".equals(kycStatus)) {
+            limit = new BigDecimal("10000");   // ₹10k/day until upgraded
+        } else {
+            limit = request.getAccountType() == AccountType.SAVINGS
+                    ? new BigDecimal("100000")
+                    : new BigDecimal("500000");
+        }
+        account.setDailyTransactionLimit(limit);
 
         Account saved = accountRepository.save(account);
         log.info("Account created: {}", saved.getAccountNumber());

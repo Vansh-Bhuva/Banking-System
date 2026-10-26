@@ -10,6 +10,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 )
 public interface AuthServiceClient {
 
-    @GetMapping("/internal/users/{userId}/email")
+    @GetMapping("/api/auth/internal/users/{userId}/email")
     String getUserEmail(@PathVariable("userId") Long userId);
 }

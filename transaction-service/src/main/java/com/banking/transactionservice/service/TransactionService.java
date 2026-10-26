@@ -16,14 +16,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -133,9 +131,18 @@ public class TransactionService {
     }
 
     public List<TransactionResponse> getTransactionHistory(String accountNumber) {
+        // Ownership check
+        Long currentUserId = Long.parseLong(
+                SecurityContextHolder.getContext()
+                        .getAuthentication().getPrincipal().toString());
+
+        AccountDto account = accountServiceClient.getAccount(accountNumber);
+        if (account.getUserId() == null || !account.getUserId().equals(currentUserId)) {
+            throw new RuntimeException("Not authorized to view this account's history");
+        }
 
         return transactionRepository
-                .findBySenderAccountNumberOrderByCreatedAtDesc(accountNumber)
+                .findAllByAccount(accountNumber)
                 .stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
@@ -243,14 +250,18 @@ public class TransactionService {
     }
 
     public void processCleanResult(String transactionID) {
+        Optional<Transaction> opt = transactionRepository.findById(transactionID);
 
-        Transaction transaction = transactionRepository.findById(transactionID)
-                .orElseThrow(() -> new RuntimeException(
-                        "Transaction not found " + transactionID
-                ));
+        if (opt.isEmpty()) {
+            log.warn("Clean result for unknown tx {} — ignoring (stale/truncated)", transactionID);
+            return;
+        }
+
+        Transaction transaction = opt.get();
 
         if (transaction.getStatus() != TransactionStatus.PROCESSING) {
-            log.warn("Transaction {} not PROCESSING - skipping", transactionID);
+            log.warn("Transaction {} not PROCESSING (status={}) — skipping",
+                    transactionID, transaction.getStatus());
             return;
         }
 
@@ -258,21 +269,34 @@ public class TransactionService {
     }
 
     public Map<String, Object> getOTP(String transactionID) {
-
-        String otpKey = "verification:otp" + transactionID;
+        String otpKey = "verification:otp" + transactionID;   // ← must match generation key
         String storedOtp = redisTemplate.opsForValue().get(otpKey);
-
-        if (storedOtp == null) {
-            throw new RuntimeException("OTP expired or not generated");
-        }
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("otp", storedOtp);
-        response.put("otpRequired", true);
-
-        return response;
+        if (storedOtp == null) throw new RuntimeException("OTP expired or not generated");
+        return Map.of("otp", storedOtp, "otpRequired", true);
     }
 
+    @Scheduled(fixedRate = 60_000)   // every 60 seconds
+    @Transactional
+    public void expireStaleOtpTransfers() {
+        LocalDateTime cutoff = LocalDateTime.now().minusMinutes(10);
+
+        List<Transaction> stale = transactionRepository
+                .findByStatusAndCreatedAtBefore(TransactionStatus.PROCESSING, cutoff);
+
+        if (stale.isEmpty()) return;
+
+        log.warn("Found {} stale PROCESSING transactions — refunding", stale.size());
+
+        for (Transaction tx : stale) {
+            try {
+                compensateTransaction(tx, "OTP not verified within time limit — auto-refunded");
+                log.info("Auto-refunded tx {} amount {} to {}",
+                        tx.getId(), tx.getAmount(), tx.getSenderAccountNumber());
+            } catch (Exception e) {
+                log.error("Auto-refund failed for tx {}: {}", tx.getId(), e.getMessage());
+            }
+        }
+    }
 
     private TransactionResponse mapToResponse(Transaction transaction) {
 

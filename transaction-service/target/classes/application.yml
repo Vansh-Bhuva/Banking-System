@@ -49,6 +49,13 @@ account:
   service:
     url: http://localhost:8081
 
+auth:
+  service:
+    url: http://localhost:8086
+
+internal:
+  key: ${INTERNAL_KEY}
+
 banking:
   beneficiary:
     cooling-minutes: 30

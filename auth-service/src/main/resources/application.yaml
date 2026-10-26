@@ -18,6 +18,9 @@ spring:
 server:
   port: 8086
 
+internal:
+  key: ${INTERNAL_KEY}
+
 jwt:
   secret: ${JWT_SECRET}
   expiration: ${JWT_EXPIRATION}

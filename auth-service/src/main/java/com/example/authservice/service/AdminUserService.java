@@ -82,7 +82,7 @@ public class AdminUserService {
     }
 
     @Transactional
-    public AdminUserResponse blockUser(Long userId,Long actorId, String actorEmail) {
+    public AdminUserResponse blockUser(Long userId, Long actorId, String actorEmail) {
         User u = find(userId);
         String before = "blocked=" + u.getBlocked();
         u.setBlocked(true);
@@ -93,7 +93,7 @@ public class AdminUserService {
     }
 
     @Transactional
-    public AdminUserResponse unblockUser(Long userId,Long actorId, String actorEmail) {
+    public AdminUserResponse unblockUser(Long userId, Long actorId, String actorEmail) {
         User u = find(userId);
         String before = "blocked=" + u.getBlocked();
         u.setBlocked(false);
@@ -110,6 +110,14 @@ public class AdminUserService {
 
     private AdminUserResponse map(User u) {
         AdminUserResponse r = new AdminUserResponse();
+        if (u.getAadhaarEncrypted() != null) {
+            String a = u.getAadhaarEncrypted();
+            r.setAadhaarMasked("XXXXXXXX" + a.substring(a.length() - 4));
+        }
+        if (u.getPanEncrypted() != null) {
+            String p = u.getPanEncrypted();
+            r.setPanMasked("XXXXX" + p.substring(5, 9) + "X");
+        }
         r.setId(u.getId());
         r.setName(u.getName());
         r.setEmail(u.getEmail());
