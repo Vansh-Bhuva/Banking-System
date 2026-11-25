@@ -33,10 +33,13 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/api/auth/register",
+                                "/api/auth/account-requests",
+                                "/api/auth/account-requests/verify-email",
                                 "/api/auth/login",
+                                "/api/auth/password/change",   // protected by the pre-auth token, checked in the service
                                 "/api/auth/internal/**"
                         ).permitAll()
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")   // defence in depth beyond the gateway
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(

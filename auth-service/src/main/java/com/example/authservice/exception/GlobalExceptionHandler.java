@@ -47,6 +47,16 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleBadRequest(IllegalArgumentException ex, HttpServletRequest req) {
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), req.getRequestURI());
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ErrorResponse> handleConflict(IllegalStateException ex, HttpServletRequest req) {
+        return buildErrorResponse(HttpStatus.CONFLICT, ex.getMessage(), req.getRequestURI());
+    }
+
     private ResponseEntity<ErrorResponse> buildErrorResponse(
             HttpStatus status,
             String message,

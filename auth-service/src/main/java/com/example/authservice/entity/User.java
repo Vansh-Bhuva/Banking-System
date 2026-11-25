@@ -41,6 +41,16 @@ public class User {
     @Column(length = 512)
     private String panEncrypted;
 
+    private String phone;
+
+    @Builder.Default
+    private Boolean passwordChangeRequired = false;
+    private LocalDateTime tempPasswordExpiresAt;
+
+    @Builder.Default
+    private Integer failedLoginAttempts = 0;
+    private LocalDateTime lockedUntil;
+
     // ── KYC ────────────────────────────────────────
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -50,10 +60,6 @@ public class User {
     private LocalDateTime kycSubmittedAt;
     private LocalDateTime kycVerifiedAt;
     private LocalDate kycExpiryDate;
-
-    @Column(precision = 15, scale = 2)
-    @Builder.Default
-    private BigDecimal ytdCredits = BigDecimal.ZERO;
 
     private Integer fyYear;
 

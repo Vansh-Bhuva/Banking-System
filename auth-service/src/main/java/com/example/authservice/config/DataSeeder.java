@@ -35,7 +35,6 @@ public class DataSeeder implements CommandLineRunner {
                 .password(passwordEncoder.encode("Admin@123"))
                 .role(Role.ADMIN)
                 .kycStatus(KycStatus.FULL_KYC)
-                .ytdCredits(BigDecimal.ZERO)
                 .build();
 
         userRepository.save(admin);

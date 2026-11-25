@@ -93,4 +93,30 @@ public class JwtService {
                 secret.getBytes(StandardCharsets.UTF_8)
         );
     }
+
+    @Value("${jwt.secret}")
+    private String preAuthSecret;
+
+    private SecretKey preAuthKey() {
+        return Keys.hmacShaKeyFor(preAuthSecret.getBytes(StandardCharsets.UTF_8));
+    }
+
+    public String generatePreAuthToken(User user, String stage) {
+        return Jwts.builder()
+                .subject(user.getEmail())
+                .claim("userId", user.getId())
+                .claim("stage", stage)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + 10 * 60 * 1000)) // 10 min
+                .signWith(preAuthKey())
+                .compact();
+    }
+
+    public Claims parsePreAuthToken(String token, String expectedStage) {
+        Claims c = Jwts.parser().verifyWith(preAuthKey()).build()
+                .parseSignedClaims(token).getPayload();
+        if (!expectedStage.equals(c.get("stage", String.class)))
+            throw new io.jsonwebtoken.JwtException("Wrong token stage");
+        return c;
+    }
 }

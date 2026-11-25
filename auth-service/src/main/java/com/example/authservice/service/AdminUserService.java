@@ -124,7 +124,6 @@ public class AdminUserService {
         r.setRole(u.getRole());
         r.setKycStatus(u.getKycStatus());
         r.setBlocked(u.getBlocked());
-        r.setYtdCredits(u.getYtdCredits());
         r.setKycVerifiedAt(u.getKycVerifiedAt());
         r.setKycRejectionReason(u.getKycRejectionReason());
         return r;

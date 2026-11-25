@@ -1,9 +1,6 @@
 package com.example.authservice.controller;
 
-import com.example.authservice.dto.AuthResponse;
-import com.example.authservice.dto.KycSubmitRequest;
-import com.example.authservice.dto.LoginRequest;
-import com.example.authservice.dto.RegisterRequest;
+import com.example.authservice.dto.*;
 import com.example.authservice.enums.KycStatus;
 import com.example.authservice.repository.UserRepository;
 import com.example.authservice.security.JwtService;
@@ -31,13 +28,13 @@ public class AuthController {
     @Value("${internal.key}")
     private String expectedInternalKey;
 
-    @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(
-            @Valid @RequestBody RegisterRequest request) {
-
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(authService.register(request));
+    private Long currentUserId() {
+        Object p = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (p instanceof com.example.authservice.security.CustomUserDetails cud) {
+            return cud.getUser().getId();
+        }
+        if (p instanceof Long l) return l;
+        throw new RuntimeException("Unauthenticated");
     }
 
     @PostMapping("/login")
@@ -45,6 +42,13 @@ public class AuthController {
             @Valid @RequestBody LoginRequest request) {
 
         return ResponseEntity.ok(authService.login(request));
+    }
+
+    @PostMapping("/password/change")
+    public ResponseEntity<AuthResponse> changePassword(
+            @RequestHeader("Authorization") String authHeader,
+            @Valid @RequestBody ChangePasswordRequest req) {
+        return ResponseEntity.ok(authService.changePassword(authHeader.replaceFirst("^Bearer ", ""), req));
     }
 
     @GetMapping("/internal/users/{userId}/email")
@@ -131,5 +135,27 @@ public class AuthController {
                 0L, "system@bank.local", "System", "ADMIN");
 
         return ResponseEntity.ok(Map.of("token", token));
+    }
+
+    @GetMapping("/profile")
+    public ResponseEntity<ProfileResponse> getProfile() {
+        Long userId = currentUserId();
+        var u = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return ResponseEntity.ok(mapToProfile(u));
+    }
+
+    private ProfileResponse mapToProfile(com.example.authservice.entity.User u) {
+        ProfileResponse r = new ProfileResponse();
+        r.setId(u.getId());
+        r.setName(u.getName());
+        r.setEmail(u.getEmail());
+        r.setRole(u.getRole());
+        r.setKycStatus(u.getKycStatus());
+        r.setBlocked(u.getBlocked());
+        r.setKycSubmittedAt(u.getKycSubmittedAt());
+        r.setKycVerifiedAt(u.getKycVerifiedAt());
+        r.setKycRejectionReason(u.getKycRejectionReason());
+        return r;
     }
 }

@@ -16,7 +16,6 @@ public class AdminUserResponse {
     private Boolean blocked;
     private String aadhaarMasked;   // "XXXXXXXX1234"
     private String panMasked;       // "XXXXX1234X"
-    private BigDecimal ytdCredits;
     private LocalDateTime kycVerifiedAt;
     private String kycRejectionReason;
 }

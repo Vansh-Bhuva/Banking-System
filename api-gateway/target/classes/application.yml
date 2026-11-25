@@ -18,6 +18,11 @@ spring:
           uri: http://localhost:8086
           predicates:
             - Path=/api/auth/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 5
+                redis-rate-limiter.burstCapacity: 10
 
         # Account Service
         - id: account-service
@@ -51,7 +56,7 @@ spring:
         - id: admin-auth
           uri: http://localhost:8086
           predicates:
-            - Path=/api/v1/admin/users/**,/api/v1/admin/kyc/**
+            - Path=/api/v1/admin/users/**,/api/v1/admin/kyc/**,/api/v1/admin/account-requests/**
 
         - id: admin-account
           uri: http://localhost:8081
